@@ -1,29 +1,96 @@
-﻿using ArchProject.Data;
+﻿using ArchProject.Commands;
+using ArchProject.Data;
 using ArchProject.Repositories;
 using ArchProject.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ArchProject;
 
 class Arch
 {
-    static void Main(string[] args)
+    private static void Main()
     {
         Console.WriteLine("Welcome to the CLI Application!");
-        // Console.WriteLine("Please enter the number corresponding to the command you want to execute:");
-        // Console.WriteLine("1. Place Order");
-        // Console.WriteLine("2. Cancel Order");
-        // Console.WriteLine("3. View Menu");
-        // Console.WriteLine("4. Add to Cart");
-        // Console.WriteLine("5. Remove from Cart");
-        // Console.WriteLine("6. View Cart");
-        // Console.WriteLine("7. Customize Menu Item");
-        // Console.WriteLine("8. Checkout");
+        
+        var commands = SetupCommands();
 
-        using var dbContext = new MyDbContext();
-        var cartRepository = new CartRepository(dbContext);
-        var cartService = new CartService(cartRepository);
+
+        List<ICommand> commandHistory = new List<ICommand>();
+        while (true)
+        {
+            CommandPrint(commands, commandHistory);
+
+            string? input = Console.ReadLine();
             
-        var cart = cartService.GetCartById(1);
-        Console.WriteLine(cart != null ? $"Cart with id {cart.Id}" : "Cart not found.");
+            if (input is "q" or "Q")
+            {
+                break;
+            }
+            if (input is "u" or "U")
+            {
+                var command = commandHistory.Last();
+                commandHistory.RemoveAt(commands.Count - 1);
+                command.Undo();
+                continue;
+            }
+
+            int commandInput = int.Parse(input ?? string.Empty);
+
+            if (commandInput < commands.Count && commandInput >= 0)
+            {
+                var command = commands[commandInput];
+                commandHistory.Add(command);
+                command.Execute();
+            }
+            else
+            {
+                Console.WriteLine("Invalid command!");
+            }
+        }
+    }
+
+    private static ServiceCollection ConfigureServices()
+    {
+        var services = new ServiceCollection();
+        services.AddDbContext<MyDbContext>();
+        
+        // Register services
+        services.AddSingleton<ICartService, CartService>();
+        
+        // Register repositories
+        services.AddSingleton<ICartRepository, CartRepository>();
+
+        return services;    
+    }
+
+    private static void CommandPrint(List<ICommand> commands, List<ICommand> commandHistory)
+    {        
+        Console.WriteLine("--------------------");
+        Console.WriteLine("COMMANDS:");
+        if (commandHistory.Count > 0)
+        {
+            Console.WriteLine("Undo last command: u");
+        }
+        foreach (var command in commands)
+        {
+            Console.WriteLine($"{commands.IndexOf(command)}: {command.Description}");
+        }            
+        Console.Write("Please enter the character corresponding to the command you want to execute (or 'q' to quit):");
+    }
+    
+    private static List<ICommand> SetupCommands()
+    {
+        var services = ConfigureServices();
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Resolve the required services
+        var cartService = serviceProvider.GetRequiredService<ICartService>();
+
+        var commands = new List<ICommand>
+        {
+            new ViewCartCommand(cartService),
+        };
+        
+        return commands;
     }
 }
