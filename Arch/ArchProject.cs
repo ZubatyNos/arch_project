@@ -10,12 +10,12 @@ class Arch
 {
     private static void Main()
     {
-        Console.WriteLine("Welcome to the CLI Application!");
+        Console.WriteLine("Welcome to the Food Ordering CLI Application!");
         
         var commands = SetupCommands();
 
 
-        List<ICommand> commandHistory = new List<ICommand>();
+        var commandHistory = new List<ICommand>();
         while (true)
         {
             CommandPrint(commands, commandHistory);
@@ -54,12 +54,16 @@ class Arch
         var services = new ServiceCollection();
         services.AddDbContext<MyDbContext>();
         
-        // Register services
-        services.AddSingleton<ICartService, CartService>();
-        
         // Register repositories
         services.AddSingleton<ICartRepository, CartRepository>();
-
+        services.AddSingleton<IStoreRepository, StoreRepository>();
+        services.AddSingleton<IStoreFoodItemRepository, StoreFoodItemRepository>();
+        
+        // Register services
+        services.AddSingleton<ICartService, CartService>();
+        services.AddSingleton<IStoreService, StoreService>();
+        services.AddSingleton<IStoreFoodItemService, StoreFoodItemService>();
+        
         return services;    
     }
 
@@ -85,10 +89,13 @@ class Arch
 
         // Resolve the required services
         var cartService = serviceProvider.GetRequiredService<ICartService>();
+        var storeService = serviceProvider.GetRequiredService<IStoreService>();
+        var storeFoodItemService = serviceProvider.GetRequiredService<IStoreFoodItemService>();
 
         var commands = new List<ICommand>
         {
             new ViewCartCommand(cartService),
+            new OrderFoodCommand(storeService, storeFoodItemService)
         };
         
         return commands;

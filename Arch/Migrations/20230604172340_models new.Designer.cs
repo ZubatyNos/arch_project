@@ -3,6 +3,7 @@ using System;
 using ArchProject.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ArchProject.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230604172340_models new")]
+    partial class modelsnew
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -68,14 +71,14 @@ namespace ArchProject.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<TimeSpan>("ClosingTime")
+                    b.Property<TimeSpan>("closingTime")
                         .HasColumnType("interval");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<TimeSpan>("OpeningTime")
+                    b.Property<TimeSpan>("openingTime")
                         .HasColumnType("interval");
 
                     b.HasKey("Id");
@@ -86,9 +89,9 @@ namespace ArchProject.Migrations
                         new
                         {
                             Id = 1,
-                            ClosingTime = new TimeSpan(0, 20, 0, 0, 0),
-                            Name = "Hipstersky store",
-                            OpeningTime = new TimeSpan(0, 16, 30, 0, 0)
+                            closingTime = new TimeSpan(0, 20, 0, 0, 0),
+                            name = "Hipstersky store",
+                            openingTime = new TimeSpan(0, 16, 30, 0, 0)
                         });
                 });
 
