@@ -7,11 +7,13 @@ namespace ArchProject.Commands;
 public class OrderFoodCommand : ICommand
 {
     private readonly IStoreService _storeService;
+    private readonly ICartEntryService _cartEntryService;
     private readonly IStoreFoodItemService _storeFoodItemService;
 
-    public OrderFoodCommand(IStoreService storeService, IStoreFoodItemService storeFoodItemService)
+    public OrderFoodCommand(IStoreService storeService, ICartEntryService cartEntryService, IStoreFoodItemService storeFoodItemService)
     {
         _storeService = storeService;
+        _cartEntryService = cartEntryService;
         _storeFoodItemService = storeFoodItemService;
     }
 
@@ -20,19 +22,17 @@ public class OrderFoodCommand : ICommand
         var store = SelectStore();
         if (store == null)
         {
-            // TODO: ????
             return;
         }
         // maybe have a loop here to select multiple foods?
-        var storeFoodItems = new List<StoreFoodItem>();
-        var storeFoodItem = SelectFoodItemsOfStore(store.Id);
-        
+        var selectFoodItemsOfStore = SelectStoreFoodItems(store.Id);
+        _cartEntryService.AddToCart(selectFoodItemsOfStore);
         // TODO: ask for payment
         
        
     }
 
-    public Store? SelectStore()
+    private Store? SelectStore()
     {
         Console.WriteLine("Available Stores:");
         var stores = _storeService.GetAllStores();
@@ -42,39 +42,61 @@ public class OrderFoodCommand : ICommand
         }
         
         Console.Write("Please enter the id of the store you want to order from:");
-        string? input = Console.ReadLine();
-        int id = int.Parse(input ?? string.Empty);
-        if (stores.Any(s => s.Id == id))
+        var input = Console.ReadLine();
+        var inputId = int.Parse(input ?? string.Empty);
+        if (stores.Any(s => s.Id == inputId))
         {
-            var store = stores.First(s => s.Id == id);
-            Console.WriteLine(store.IsOpen() ? "Store is open!" : "Store is closed!");
+            var store = stores.First(s => s.Id == inputId);
+            if (store.IsOpen() == false)
+            {
+                Console.WriteLine("Store is closed!");
+            }
             return store;
         }
         Console.WriteLine("Invalid store id!");
         return null;
     }
 
-    public StoreFoodItem? SelectFoodItemsOfStore(int storeId)
+    private List<StoreFoodItem> SelectStoreFoodItems(int storeId)
     {
+        var selectedStoreFoodItems = new List<StoreFoodItem>();
         var storeFoodItems = _storeFoodItemService.GetAllStoreFoodItemsByStoreId(storeId);
-        foreach (var storeFoodItem in storeFoodItems)
+        if (storeFoodItems.Count == 0)
         {
-            Console.WriteLine($"Food id: {storeFoodItems.IndexOf(storeFoodItem)}, Name: {storeFoodItem.FoodItem.Name}, Price: {storeFoodItem.Price}");
+            Console.WriteLine("No food items available in this store!");
+            return selectedStoreFoodItems;
+        }
+        while (true)
+        {
+            foreach (var storeFoodItem in storeFoodItems)
+            {
+                Console.WriteLine(
+                    $"Food id: {storeFoodItems.IndexOf(storeFoodItem)}, Name: {storeFoodItem.FoodItem.Name}, Price: {storeFoodItem.Price}");
+            }
+
+            Console.Write("Please enter the id of the food you want to order or type 'q' to end selection:");
+            var input = Console.ReadLine();
+            if (input is "q" or "Q")
+            {
+                break;
+            }
+            
+            var id = int.Parse(input ?? string.Empty);
+            if (id < storeFoodItems.Count && id >= 0)
+            {
+                var storeFoodItem = storeFoodItems[id];
+                selectedStoreFoodItems.Add(storeFoodItem);
+                Console.WriteLine("Food added to cart!");
+                continue;
+            }
+            Console.WriteLine("Invalid food id!"); 
         }
         
-        Console.Write("Please enter the id of the food you want to order:");
-        var input = Console.ReadLine();
-        var id = int.Parse(input ?? string.Empty);
-        if (id < storeFoodItems.Count && id >= 0)
-        {
-            var storeFoodItem = storeFoodItems[id];
-            Console.WriteLine($"You ordered {storeFoodItem.FoodItem.Name} for {storeFoodItem.Price}");
-            return storeFoodItem;
-        }
-        Console.WriteLine("Invalid food id!");
-        return null;
-
+        return selectedStoreFoodItems;
     }
+    
+    
+    
     public void Undo()
     {
         // idk how to undo a complex command like this
@@ -82,5 +104,5 @@ public class OrderFoodCommand : ICommand
         // if there were foods selected then unselect them
     }
 
-    public string Description { get; } = "Order food";
+    public string Description => "Order food";
 }

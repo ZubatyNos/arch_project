@@ -3,6 +3,7 @@ using System;
 using ArchProject.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ArchProject.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230607115226_column")]
+    partial class column
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,22 +25,23 @@ namespace ArchProject.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ArchProject.Models.CartEntry", b =>
+            modelBuilder.Entity("ArchProject.Models.Cart", b =>
                 {
-                    b.Property<int>("StoreId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    b.Property<int>("FoodItemId")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MenuItemId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
-                    b.HasKey("StoreId", "FoodItemId");
+                    b.HasKey("Id");
 
-                    b.HasIndex("FoodItemId");
-
-                    b.ToTable("Cart");
+                    b.ToTable("Carts");
                 });
 
             modelBuilder.Entity("ArchProject.Models.FoodItem", b =>
@@ -154,51 +158,32 @@ namespace ArchProject.Migrations
                         {
                             StoreId = 1,
                             FoodItemId = 1,
-                            Price = 20m
+                            Price = 10m
                         },
                         new
                         {
                             StoreId = 1,
                             FoodItemId = 2,
-                            Price = 30m
+                            Price = 10m
                         },
                         new
                         {
                             StoreId = 1,
                             FoodItemId = 3,
-                            Price = 40m
+                            Price = 10m
                         },
                         new
                         {
                             StoreId = 1,
                             FoodItemId = 4,
-                            Price = 50m
+                            Price = 10m
                         },
                         new
                         {
                             StoreId = 1,
                             FoodItemId = 5,
-                            Price = 60m
+                            Price = 10m
                         });
-                });
-
-            modelBuilder.Entity("ArchProject.Models.CartEntry", b =>
-                {
-                    b.HasOne("ArchProject.Models.FoodItem", "FoodItem")
-                        .WithMany()
-                        .HasForeignKey("FoodItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ArchProject.Models.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("FoodItem");
-
-                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("ArchProject.Models.StoreFoodItem", b =>

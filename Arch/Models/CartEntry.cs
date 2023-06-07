@@ -1,13 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
 namespace ArchProject.Models;
+using System.ComponentModel.DataAnnotations;
 
 [PrimaryKey(nameof(StoreId), nameof(FoodItemId))]
-public class StoreFoodItem
+public class CartEntry
 {
     public int StoreId { get; set; }
-    public Store? Store { get; set; }
+    public Store Store { get; set; }
     public int FoodItemId { get; set; }
-    public FoodItem? FoodItem { get; set; }
-    public decimal Price { get; set; }
+    public FoodItem FoodItem { get; set; }
+    public int Quantity { get; set; }
+    
 }

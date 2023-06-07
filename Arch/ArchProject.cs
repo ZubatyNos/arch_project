@@ -55,12 +55,12 @@ class Arch
         services.AddDbContext<MyDbContext>();
         
         // Register repositories
-        services.AddSingleton<ICartRepository, CartRepository>();
+        services.AddSingleton<ICartEntryRepository, CartEntryRepository>();
         services.AddSingleton<IStoreRepository, StoreRepository>();
         services.AddSingleton<IStoreFoodItemRepository, StoreFoodItemRepository>();
         
         // Register services
-        services.AddSingleton<ICartService, CartService>();
+        services.AddSingleton<ICartEntryService, CartEntryService>();
         services.AddSingleton<IStoreService, StoreService>();
         services.AddSingleton<IStoreFoodItemService, StoreFoodItemService>();
         
@@ -68,7 +68,8 @@ class Arch
     }
 
     private static void CommandPrint(List<ICommand> commands, List<ICommand> commandHistory)
-    {        
+    {
+        Console.WriteLine();
         Console.WriteLine("--------------------");
         Console.WriteLine("COMMANDS:");
         if (commandHistory.Count > 0)
@@ -88,14 +89,14 @@ class Arch
         var serviceProvider = services.BuildServiceProvider();
 
         // Resolve the required services
-        var cartService = serviceProvider.GetRequiredService<ICartService>();
+        var cartService = serviceProvider.GetRequiredService<ICartEntryService>();
         var storeService = serviceProvider.GetRequiredService<IStoreService>();
         var storeFoodItemService = serviceProvider.GetRequiredService<IStoreFoodItemService>();
 
         var commands = new List<ICommand>
         {
             new ViewCartCommand(cartService),
-            new OrderFoodCommand(storeService, storeFoodItemService)
+            new OrderFoodCommand(storeService, cartService, storeFoodItemService)
         };
         
         return commands;

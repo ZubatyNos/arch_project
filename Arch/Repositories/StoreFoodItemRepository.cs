@@ -1,5 +1,6 @@
 ﻿using ArchProject.Data;
 using ArchProject.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ArchProject.Repositories;
 
@@ -14,7 +15,9 @@ public class StoreFoodItemRepository : IStoreFoodItemRepository
 
     public List<StoreFoodItem> GetAllStoreFoodItemsByStoreId(int storeId)
     {
-        using var context = new MyDbContext();
-        return context.StoreFoodItem.Where(x => x.StoreId == storeId).ToList();
+        return _dbContext.StoreFoodItem
+            .Where(x => x.StoreId == storeId)
+            .Include(sf => sf.FoodItem)
+            .ToList();
     }
 }

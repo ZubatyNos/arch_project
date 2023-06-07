@@ -4,22 +4,19 @@ namespace ArchProject.Commands;
 
 public class ViewCartCommand : ICommand
 {
-    private readonly ICartService _cartService;
-    public ViewCartCommand(ICartService cartService)
+    private readonly ICartEntryService _cartEntryService;
+    public ViewCartCommand(ICartEntryService cartEntryService)
     {
-        this._cartService = cartService;
+        _cartEntryService = cartEntryService;
     }
 
     public void Execute()
     {
-        // View cart using the CartService
-        Console.Write("Please enter the id of the cart you want to view:");
-        var id = int.Parse(Console.ReadLine() ?? string.Empty);
-        var cart = _cartService.GetCartById(id);
-        if (cart != null)
+        var cart = _cartEntryService.GetCart();
+        Console.WriteLine($"Cart items({cart.Count}):");
+        foreach (var cartEntry in cart)
         {
-            Console.WriteLine("........");
-            Console.WriteLine($"Cart id: {cart.Id}, Quantity: {cart.Quantity}, MenuItemId: {cart.MenuItemId}");
+            Console.WriteLine($"{cartEntry.FoodItem.Name}, {cartEntry.Quantity}pcs");
         }
     }
 
@@ -28,5 +25,5 @@ public class ViewCartCommand : ICommand
         
     }
     
-    public string Description => "View Cart (input: id)";
+    public string Description => "View Cart Items";
 }

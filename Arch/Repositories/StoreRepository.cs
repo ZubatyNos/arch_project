@@ -14,7 +14,6 @@ public class StoreRepository : IStoreRepository
 
     public List<Store> GetAllStores()
     {
-        using var context = new MyDbContext();
-        return context.Store.ToList();
+        return _dbContext.Store.ToList();
     }
 }
