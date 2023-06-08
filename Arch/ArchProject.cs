@@ -58,11 +58,13 @@ class Arch
         services.AddSingleton<ICartEntryRepository, CartEntryRepository>();
         services.AddSingleton<IStoreRepository, StoreRepository>();
         services.AddSingleton<IStoreFoodItemRepository, StoreFoodItemRepository>();
+        services.AddSingleton<IOrderRepository, OrderRepository>();
         
         // Register services
         services.AddSingleton<ICartEntryService, CartEntryService>();
         services.AddSingleton<IStoreService, StoreService>();
         services.AddSingleton<IStoreFoodItemService, StoreFoodItemService>();
+        services.AddSingleton<IOrderService, OrderService>();
         
         return services;    
     }
@@ -92,11 +94,13 @@ class Arch
         var cartService = serviceProvider.GetRequiredService<ICartEntryService>();
         var storeService = serviceProvider.GetRequiredService<IStoreService>();
         var storeFoodItemService = serviceProvider.GetRequiredService<IStoreFoodItemService>();
+        var orderService = serviceProvider.GetRequiredService<IOrderService>();
 
         var commands = new List<ICommand>
         {
             new ViewCartCommand(cartService),
-            new OrderFoodCommand(storeService, cartService, storeFoodItemService)
+            new OrderFoodCommand(storeService, orderService, cartService, storeFoodItemService),
+            new ViewAllOrdersCommand(orderService)
         };
         
         return commands;

@@ -3,6 +3,7 @@ using System;
 using ArchProject.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ArchProject.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230608081550_join table fr")]
+    partial class jointablefr
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -115,29 +118,6 @@ namespace ArchProject.Migrations
                     b.HasIndex("StoreFoodItemStoreId", "StoreFoodItemFoodItemId");
 
                     b.ToTable("Order");
-                });
-
-            modelBuilder.Entity("ArchProject.Models.OrderStoreFoodItem", b =>
-                {
-                    b.Property<int>("OrderId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("StoreId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("FoodItemId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.HasKey("OrderId", "StoreId", "FoodItemId");
-
-                    b.HasIndex("FoodItemId");
-
-                    b.HasIndex("StoreId");
-
-                    b.ToTable("OrderStoreFoodItem");
                 });
 
             modelBuilder.Entity("ArchProject.Models.Store", b =>
@@ -253,33 +233,6 @@ namespace ArchProject.Migrations
                     b.HasOne("ArchProject.Models.StoreFoodItem", null)
                         .WithMany("Orders")
                         .HasForeignKey("StoreFoodItemStoreId", "StoreFoodItemFoodItemId");
-                });
-
-            modelBuilder.Entity("ArchProject.Models.OrderStoreFoodItem", b =>
-                {
-                    b.HasOne("ArchProject.Models.FoodItem", "FoodItem")
-                        .WithMany()
-                        .HasForeignKey("FoodItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ArchProject.Models.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ArchProject.Models.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("FoodItem");
-
-                    b.Navigation("Order");
-
-                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("ArchProject.Models.StoreFoodItem", b =>

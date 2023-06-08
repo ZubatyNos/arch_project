@@ -9,7 +9,9 @@ public class MyDbContext : DbContext
     public DbSet<Store> Store { get; set; }
     public DbSet<StoreFoodItem> StoreFoodItem { get; set; }
     public DbSet<FoodItem> FoodItem { get; set; }
-    
+    public DbSet<Order> Order { get; set; }
+    public DbSet<OrderStoreFoodItem> OrderStoreFoodItem { get; set; }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -19,6 +21,10 @@ public class MyDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Order>()
+            .Property(o => o.Status)
+            .HasConversion<int>();
+        
         var stores = CreateStoreDtos();
         modelBuilder.Entity<Store>().HasData(stores);
         

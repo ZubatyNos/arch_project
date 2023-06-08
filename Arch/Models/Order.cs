@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using ArchProject.Enums;
 
 namespace ArchProject.Models;
 
@@ -6,5 +7,5 @@ public class Order
 {
     [Key]
     public int Id { get; set; }
-    public List<StoreFoodItem> StoreFoodItems { get; set; } = new();
+    public OrderStatus Status { get; set; }
 }

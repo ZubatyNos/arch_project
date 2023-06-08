@@ -1,6 +1,7 @@
-﻿using ArchProject.Models;
+﻿using System.Runtime.InteropServices.ComTypes;
+using ArchProject.Enums;
+using ArchProject.Models;
 using ArchProject.Services;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Internal;
 
 namespace ArchProject.Commands;
 
@@ -9,12 +10,14 @@ public class OrderFoodCommand : ICommand
     private readonly IStoreService _storeService;
     private readonly ICartEntryService _cartEntryService;
     private readonly IStoreFoodItemService _storeFoodItemService;
+    private readonly IOrderService _orderService;
 
-    public OrderFoodCommand(IStoreService storeService, ICartEntryService cartEntryService, IStoreFoodItemService storeFoodItemService)
+    public OrderFoodCommand(IStoreService storeService, IOrderService orderService, ICartEntryService cartEntryService, IStoreFoodItemService storeFoodItemService)
     {
         _storeService = storeService;
         _cartEntryService = cartEntryService;
         _storeFoodItemService = storeFoodItemService;
+        _orderService = orderService;
     }
 
     public void Execute()
@@ -24,12 +27,38 @@ public class OrderFoodCommand : ICommand
         {
             return;
         }
-        // maybe have a loop here to select multiple foods?
+
         var selectFoodItemsOfStore = SelectStoreFoodItems(store.Id);
         _cartEntryService.AddToCart(selectFoodItemsOfStore);
-        // TODO: ask for payment
         
-       
+        
+        Console.WriteLine("Do you want to pay now? (y/n)");
+        var input = Console.ReadLine();
+        switch (input)
+        {
+            case "n" or "N":
+                return;
+            case "y" or "Y":
+                OrderFood();
+                break;
+        }
+    }
+
+    private void OrderFood()
+    {
+        var order = new Order
+        {
+            Status = OrderStatus.Paid
+        };
+        _orderService.AddOrder(order);
+        var orderStoreFoodItems = _cartEntryService.GetCart().Select(cartEntry => new OrderStoreFoodItem
+        {
+            OrderId = order.Id,
+            StoreId = cartEntry.StoreId,
+            FoodItemId = cartEntry.FoodItemId,
+            Quantity = cartEntry.Quantity
+        }).ToList();
+        _orderService.AddOrderStoreFoodItems(orderStoreFoodItems);
     }
 
     private Store? SelectStore()
@@ -78,7 +107,7 @@ public class OrderFoodCommand : ICommand
             var input = Console.ReadLine();
             if (input is "q" or "Q")
             {
-                break;
+                return selectedStoreFoodItems;
             }
             
             var id = int.Parse(input ?? string.Empty);
@@ -91,8 +120,6 @@ public class OrderFoodCommand : ICommand
             }
             Console.WriteLine("Invalid food id!"); 
         }
-        
-        return selectedStoreFoodItems;
     }
     
     
