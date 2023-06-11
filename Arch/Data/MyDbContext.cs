@@ -12,7 +12,6 @@ public class MyDbContext : DbContext
     public DbSet<Order> Order { get; set; }
     public DbSet<OrderStoreFoodItem> OrderStoreFoodItem { get; set; }
 
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         string connectionString = "Server=localhost;Port=5433;Database=postgres;User Id=zubaty;Password=mypass;";

@@ -6,5 +6,4 @@ public interface ICommand
     void Undo();
 
     string Description { get; }
-    
 }

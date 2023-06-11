@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
 namespace ArchProject.Models;
-using System.ComponentModel.DataAnnotations;
 
 [PrimaryKey(nameof(StoreId), nameof(FoodItemId))]
 public class CartEntry

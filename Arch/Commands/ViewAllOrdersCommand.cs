@@ -1,20 +1,21 @@
-﻿using ArchProject.Services;
+﻿using ArchProject.Models;
+using ArchProject.Repositories;
 
 namespace ArchProject.Commands;
 
 public class ViewAllOrdersCommand : ICommand
 {
-    private readonly IOrderService _orderService;
+    private readonly IGenericRepository<Order> _orderRepository;
 
-    public ViewAllOrdersCommand(IOrderService orderService)
+    public ViewAllOrdersCommand(IGenericRepository<Order> orderRepository)
     {
-        _orderService = orderService;
+        _orderRepository = orderRepository;
     }
 
     public void Execute()
     {
-        var orders = _orderService.GetAllOrders();
-        Console.WriteLine($"Orders ({orders.Count}):");
+        var orders = _orderRepository.GetAll().ToArray();
+        Console.WriteLine($"Orders ({orders.Length}):");
         foreach (var order in orders)
         {
             Console.WriteLine($"Order ID: {order.Id}, Order status: {order.Status}, Order items ():");

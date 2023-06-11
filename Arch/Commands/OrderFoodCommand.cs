@@ -1,23 +1,30 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-using ArchProject.Enums;
+﻿using ArchProject.Enums;
 using ArchProject.Models;
-using ArchProject.Services;
+using ArchProject.Repositories;
 
 namespace ArchProject.Commands;
 
 public class OrderFoodCommand : ICommand
 {
-    private readonly IStoreService _storeService;
-    private readonly ICartEntryService _cartEntryService;
-    private readonly IStoreFoodItemService _storeFoodItemService;
-    private readonly IOrderService _orderService;
+    private readonly IGenericRepository<CartEntry> _cartEntryRepository;
+    private readonly IGenericRepository<Store> _storeRepository;
+    private readonly IGenericRepository<Order> _orderRepository;
+    private readonly IGenericRepository<StoreFoodItem> _storeFoodItemRepository;
+    private readonly IGenericRepository<OrderStoreFoodItem> _orderStoreFoodItemRepository;
 
-    public OrderFoodCommand(IStoreService storeService, IOrderService orderService, ICartEntryService cartEntryService, IStoreFoodItemService storeFoodItemService)
+    public OrderFoodCommand(
+        IGenericRepository<CartEntry> cartEntryRepository,
+        IGenericRepository<Store> storeRepository,
+        IGenericRepository<Order> orderRepository,
+        IGenericRepository<StoreFoodItem> storeFoodItemRepository,
+        IGenericRepository<OrderStoreFoodItem> orderStoreFoodItemRepository
+    )
     {
-        _storeService = storeService;
-        _cartEntryService = cartEntryService;
-        _storeFoodItemService = storeFoodItemService;
-        _orderService = orderService;
+        _cartEntryRepository = cartEntryRepository;
+        _storeRepository = storeRepository;
+        _orderRepository = orderRepository;
+        _storeFoodItemRepository = storeFoodItemRepository;
+        _orderStoreFoodItemRepository = orderStoreFoodItemRepository;
     }
 
     public void Execute()
@@ -29,7 +36,7 @@ public class OrderFoodCommand : ICommand
         }
 
         var selectFoodItemsOfStore = SelectStoreFoodItems(store.Id);
-        _cartEntryService.AddToCart(selectFoodItemsOfStore);
+        _storeFoodItemRepository.AddRange(selectFoodItemsOfStore);
         
         
         Console.WriteLine("Do you want to pay now? (y/n)");
@@ -50,21 +57,21 @@ public class OrderFoodCommand : ICommand
         {
             Status = OrderStatus.Paid
         };
-        _orderService.AddOrder(order);
-        var orderStoreFoodItems = _cartEntryService.GetCart().Select(cartEntry => new OrderStoreFoodItem
+        _orderRepository.Add(order);
+        var orderStoreFoodItems = _cartEntryRepository.GetAll().Select(cartEntry => new OrderStoreFoodItem
         {
             OrderId = order.Id,
             StoreId = cartEntry.StoreId,
             FoodItemId = cartEntry.FoodItemId,
             Quantity = cartEntry.Quantity
         }).ToList();
-        _orderService.AddOrderStoreFoodItems(orderStoreFoodItems);
+        _orderStoreFoodItemRepository.AddRange(orderStoreFoodItems);
     }
 
     private Store? SelectStore()
     {
         Console.WriteLine("Available Stores:");
-        var stores = _storeService.GetAllStores();
+        var stores = _storeRepository.GetAll().ToArray();
         foreach (var store in stores)
         {
             Console.WriteLine($"Store id: {store.Id}, Name: {store.Name}, Opening hours: {store.OpeningTime.ToString(@"hh\:mm")} - {store.ClosingTime.ToString(@"hh\:mm")}");
@@ -89,18 +96,22 @@ public class OrderFoodCommand : ICommand
     private List<StoreFoodItem> SelectStoreFoodItems(int storeId)
     {
         var selectedStoreFoodItems = new List<StoreFoodItem>();
-        var storeFoodItems = _storeFoodItemService.GetAllStoreFoodItemsByStoreId(storeId);
-        if (storeFoodItems.Count == 0)
+        StoreFoodItem[] storeFoodItems = _storeFoodItemRepository
+            .Find(sfi => sfi.StoreId == storeId,
+                sfi => sfi.FoodItem
+                )
+            .ToArray();
+        if (storeFoodItems.Length == 0)
         {
             Console.WriteLine("No food items available in this store!");
             return selectedStoreFoodItems;
         }
         while (true)
         {
-            foreach (var storeFoodItem in storeFoodItems)
+            for (int i = 0; i < storeFoodItems.Length; i++)
             {
-                Console.WriteLine(
-                    $"Food id: {storeFoodItems.IndexOf(storeFoodItem)}, Name: {storeFoodItem.FoodItem.Name}, Price: {storeFoodItem.Price}");
+                var storeFoodItem = storeFoodItems[i];
+                Console.WriteLine($"{i}: {storeFoodItem.FoodItem.Name}, Price: {storeFoodItem.Price}");
             }
 
             Console.Write("Please enter the id of the food you want to order or type 'q' to end selection:");
@@ -111,7 +122,7 @@ public class OrderFoodCommand : ICommand
             }
             
             var id = int.Parse(input ?? string.Empty);
-            if (id < storeFoodItems.Count && id >= 0)
+            if (id < storeFoodItems.Length && id >= 0)
             {
                 var storeFoodItem = storeFoodItems[id];
                 selectedStoreFoodItems.Add(storeFoodItem);
@@ -121,8 +132,6 @@ public class OrderFoodCommand : ICommand
             Console.WriteLine("Invalid food id!"); 
         }
     }
-    
-    
     
     public void Undo()
     {

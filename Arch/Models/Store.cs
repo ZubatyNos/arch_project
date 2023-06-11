@@ -12,12 +12,9 @@ public class Store
     public TimeSpan ClosingTime { get; set; }
     
     
-    
     public bool IsOpen()
     {
         var now = DateTime.Now.TimeOfDay;
         return now >= OpeningTime && now <= ClosingTime;
     }
-    
-    
 }

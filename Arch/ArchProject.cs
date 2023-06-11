@@ -1,7 +1,7 @@
 ﻿using ArchProject.Commands;
 using ArchProject.Data;
+using ArchProject.Models;
 using ArchProject.Repositories;
-using ArchProject.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ArchProject;
@@ -55,16 +55,12 @@ class Arch
         services.AddDbContext<MyDbContext>();
         
         // Register repositories
-        services.AddSingleton<ICartEntryRepository, CartEntryRepository>();
-        services.AddSingleton<IStoreRepository, StoreRepository>();
-        services.AddSingleton<IStoreFoodItemRepository, StoreFoodItemRepository>();
-        services.AddSingleton<IOrderRepository, OrderRepository>();
-        
-        // Register services
-        services.AddSingleton<ICartEntryService, CartEntryService>();
-        services.AddSingleton<IStoreService, StoreService>();
-        services.AddSingleton<IStoreFoodItemService, StoreFoodItemService>();
-        services.AddSingleton<IOrderService, OrderService>();
+        services.AddSingleton<IGenericRepository<Store>, GenericRepository<Store>>();
+        services.AddSingleton<IGenericRepository<Order>, GenericRepository<Order>>();
+        services.AddSingleton<IGenericRepository<OrderStoreFoodItem>, GenericRepository<OrderStoreFoodItem>>();
+        services.AddSingleton<IGenericRepository<FoodItem>, GenericRepository<FoodItem>>();
+        services.AddSingleton<IGenericRepository<CartEntry>, GenericRepository<CartEntry>>();
+        services.AddSingleton<IGenericRepository<StoreFoodItem>, GenericRepository<StoreFoodItem>>();
         
         return services;    
     }
@@ -90,17 +86,20 @@ class Arch
         var services = ConfigureServices();
         var serviceProvider = services.BuildServiceProvider();
 
-        // Resolve the required services
-        var cartService = serviceProvider.GetRequiredService<ICartEntryService>();
-        var storeService = serviceProvider.GetRequiredService<IStoreService>();
-        var storeFoodItemService = serviceProvider.GetRequiredService<IStoreFoodItemService>();
-        var orderService = serviceProvider.GetRequiredService<IOrderService>();
-
+        // Resolve the required repositories
+        var cartEntryRepository = serviceProvider.GetRequiredService<IGenericRepository<CartEntry>>();
+        var storeRepository = serviceProvider.GetRequiredService<IGenericRepository<Store>>();
+        var storeFoodItemRepository = serviceProvider.GetRequiredService<IGenericRepository<StoreFoodItem>>();
+        var orderRepository = serviceProvider.GetRequiredService<IGenericRepository<Order>>();
+        var orderStoreFoodItemRepository = serviceProvider.GetRequiredService<IGenericRepository<OrderStoreFoodItem>>();
+        var foodItemRepository = serviceProvider.GetRequiredService<IGenericRepository<FoodItem>>();
+        
+        
         var commands = new List<ICommand>
         {
-            new ViewCartCommand(cartService),
-            new OrderFoodCommand(storeService, orderService, cartService, storeFoodItemService),
-            new ViewAllOrdersCommand(orderService)
+            new ViewCartCommand(cartEntryRepository),
+            new OrderFoodCommand(cartEntryRepository, storeRepository, orderRepository, storeFoodItemRepository, orderStoreFoodItemRepository),
+            new ViewAllOrdersCommand(orderRepository)
         };
         
         return commands;
