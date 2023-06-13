@@ -1,5 +1,6 @@
 ﻿using ArchProject.Commands;
 using ArchProject.Data;
+using ArchProject.Enums;
 using ArchProject.Models;
 using ArchProject.Repositories;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,10 +12,11 @@ class Arch
     private static void Main()
     {
         Console.WriteLine("Welcome to the Food Ordering CLI Application!");
-        
-        var commands = SetupCommands();
+        var services = ConfigureServices();
+        var commands = SetupCommands(services);
 
-
+        var storeWorkerThread = new Thread(() => SimulateStore(services));
+        storeWorkerThread.Start();
         var commandHistory = new List<ICommand>();
         while (true)
         {
@@ -80,10 +82,9 @@ class Arch
         }            
         Console.Write("Please enter the character corresponding to the command you want to execute (or 'q' to quit):");
     }
-    
-    private static List<ICommand> SetupCommands()
+
+    private static List<ICommand> SetupCommands(IServiceCollection services)
     {
-        var services = ConfigureServices();
         var serviceProvider = services.BuildServiceProvider();
 
         // Resolve the required repositories
@@ -103,5 +104,34 @@ class Arch
         };
         
         return commands;
+    }
+
+    private static void SimulateStore(ServiceCollection services)
+    {
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Resolve the required repositories
+        var orderRepository = serviceProvider.GetRequiredService<IGenericRepository<Order>>();
+
+
+        while (true)
+        {
+            var orders = orderRepository.GetAll().Where(
+                o => o.Status is OrderStatus.Paid or OrderStatus.NotSeenYet or OrderStatus.ToBeDelivered
+                    )
+                .ToList();
+            var order = orders.FirstOrDefault();
+            if (order is not null)
+            {
+                order.Status = order.Status switch {
+                    OrderStatus.Paid => OrderStatus.Delivered,
+                    OrderStatus.NotSeenYet => OrderStatus.ToBeDelivered,
+                    OrderStatus.ToBeDelivered => OrderStatus.Delivered,
+                    _ => throw new ArgumentOutOfRangeException("xddd")
+                }; 
+                orderRepository.Update(order);
+            }
+            Thread.Sleep(5000);
+        }
     }
 }

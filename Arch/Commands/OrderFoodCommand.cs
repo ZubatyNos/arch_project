@@ -1,6 +1,7 @@
 ﻿using ArchProject.Enums;
 using ArchProject.Models;
 using ArchProject.Repositories;
+using ArchProject.States.OrderState;
 
 namespace ArchProject.Commands;
 
@@ -29,17 +30,17 @@ public class OrderFoodCommand : ICommand
 
     public void Execute()
     {
-        var store = SelectStore();
-        if (store == null)
-        {
-            return;
-        }
-
-        var selectFoodItemsOfStore = SelectStoreFoodItems(store.Id);
-        _storeFoodItemRepository.AddRange(selectFoodItemsOfStore);
+        // var store = SelectStore();
+        // if (store == null)
+        // {
+        //     return;
+        // }
+        //
+        // var selectFoodItemsOfStore = SelectStoreFoodItems(store.Id);
+        // _storeFoodItemRepository.AddRange(selectFoodItemsOfStore);
+        //
         
-        
-        Console.WriteLine("Do you want to pay now? (y/n)");
+        Console.WriteLine("Do you want to make an order now? (y/n)");
         var input = Console.ReadLine();
         switch (input)
         {
@@ -53,19 +54,20 @@ public class OrderFoodCommand : ICommand
 
     private void OrderFood()
     {
-        var order = new Order
-        {
-            Status = OrderStatus.Paid
-        };
-        _orderRepository.Add(order);
-        var orderStoreFoodItems = _cartEntryRepository.GetAll().Select(cartEntry => new OrderStoreFoodItem
-        {
-            OrderId = order.Id,
-            StoreId = cartEntry.StoreId,
-            FoodItemId = cartEntry.FoodItemId,
-            Quantity = cartEntry.Quantity
-        }).ToList();
-        _orderStoreFoodItemRepository.AddRange(orderStoreFoodItems);
+        var order = new Order { Status = OrderStatus.Paid };
+        var orderContext = new OrderContext(order);
+        
+        // _orderRepository.Add(orderContext.Order);
+        // var orderStoreFoodItems = _cartEntryRepository.GetAll().Select(cartEntry => new OrderStoreFoodItem
+        // {
+        //     OrderId = orderContext.Order.Id,
+        //     StoreId = cartEntry.StoreId,
+        //     FoodItemId = cartEntry.FoodItemId,
+        //     Quantity = cartEntry.Quantity
+        // }).ToList();
+        
+        // _orderStoreFoodItemRepository.AddRange(orderStoreFoodItems);
+        orderContext.ShowToStore();
     }
 
     private Store? SelectStore()

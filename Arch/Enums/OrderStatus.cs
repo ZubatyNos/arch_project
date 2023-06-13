@@ -3,8 +3,9 @@
 public enum OrderStatus
 {
     Paid,
-    NotSeen,
-    InProgress,
+    NotSeenYet,
+    ToBeDelivered,
     Delivered,
-    Refunded
+    Refunded,
+    Cancelled
 }
