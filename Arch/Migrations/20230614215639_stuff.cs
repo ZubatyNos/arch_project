@@ -5,7 +5,7 @@
 namespace ArchProject.Migrations
 {
     /// <inheritdoc />
-    public partial class jointable : Migration
+    public partial class stuff : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

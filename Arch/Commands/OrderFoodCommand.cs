@@ -10,35 +10,35 @@ public class OrderFoodCommand : ICommand
     private readonly IGenericRepository<CartEntry> _cartEntryRepository;
     private readonly IGenericRepository<Store> _storeRepository;
     private readonly IGenericRepository<Order> _orderRepository;
-    private readonly IGenericRepository<StoreFoodItem> _storeFoodItemRepository;
-    private readonly IGenericRepository<OrderStoreFoodItem> _orderStoreFoodItemRepository;
+    private readonly IGenericRepository<StoreFood> _storeFoodRepository;
+    private readonly IGenericRepository<OrderStoreFood> _orderStoreFoodRepository;
 
     public OrderFoodCommand(
         IGenericRepository<CartEntry> cartEntryRepository,
         IGenericRepository<Store> storeRepository,
         IGenericRepository<Order> orderRepository,
-        IGenericRepository<StoreFoodItem> storeFoodItemRepository,
-        IGenericRepository<OrderStoreFoodItem> orderStoreFoodItemRepository
+        IGenericRepository<StoreFood> storeFoodRepository,
+        IGenericRepository<OrderStoreFood> orderStoreFoodRepository
     )
     {
         _cartEntryRepository = cartEntryRepository;
         _storeRepository = storeRepository;
         _orderRepository = orderRepository;
-        _storeFoodItemRepository = storeFoodItemRepository;
-        _orderStoreFoodItemRepository = orderStoreFoodItemRepository;
+        _storeFoodRepository = storeFoodRepository;
+        _orderStoreFoodRepository = orderStoreFoodRepository;
     }
 
     public void Execute()
     {
-        // var store = SelectStore();
-        // if (store == null)
-        // {
-        //     return;
-        // }
-        //
-        // var selectFoodItemsOfStore = SelectStoreFoodItems(store.Id);
-        // _storeFoodItemRepository.AddRange(selectFoodItemsOfStore);
-        //
+        var store = SelectStore();
+        if (store == null)
+        {
+            return;
+        }
+        
+        var selectedStoreFoods = SelectStoreFoods(store.Id);
+        AddToCart(store, selectedStoreFoods);
+        
         
         Console.WriteLine("Do you want to make an order now? (y/n)");
         var input = Console.ReadLine();
@@ -48,25 +48,66 @@ public class OrderFoodCommand : ICommand
                 return;
             case "y" or "Y":
                 OrderFood();
+                EmptyCart();
                 break;
         }
     }
 
+    private void EmptyCart()
+    {
+        _cartEntryRepository.RemoveRange(_cartEntryRepository.GetAll());
+    }
+    
+    private void AddToCart(Store store, List<StoreFood> selectedStoreFoods)
+    {
+        var cartEntries = _cartEntryRepository.Find(ce => ce.StoreId == store.Id).ToList();
+        var storeFoodsByQuantity = selectedStoreFoods.GroupBy(sf => sf.FoodId).Select(g => new
+        {
+            FoodId = g.Key,
+            Quantity = g.Count()
+        });
+        
+        foreach (var item in storeFoodsByQuantity)
+        {
+            Console.WriteLine($"Adding {item.Quantity} {item.FoodId} to cart");
+            var cartEntry = cartEntries.FirstOrDefault(ce => ce.FoodId == item.FoodId);
+            if (cartEntry == null)
+            {
+                Console.WriteLine("Creating new cart entry");
+                Console.WriteLine($"StoreId: {store.Id}, FoodId: {item.FoodId}, Quantity: {item.Quantity}");
+                cartEntry = new CartEntry
+                {
+                    StoreId = store.Id,
+                    FoodId = item.FoodId,
+                    Quantity = item.Quantity
+                };
+                _cartEntryRepository.Add(cartEntry);
+            }
+            else
+            {
+                cartEntry.Quantity += item.Quantity;
+                _cartEntryRepository.Update(cartEntry);
+            }
+        }
+    }
+    
     private void OrderFood()
     {
-        var order = new Order { Status = OrderStatus.Paid };
-        var orderContext = new OrderContext(order);
+        var order = new Order
+        {
+            Status = OrderStatus.Paid
+        };
+        var orderContext = new OrderContext(order, _orderRepository);
         
-        // _orderRepository.Add(orderContext.Order);
-        // var orderStoreFoodItems = _cartEntryRepository.GetAll().Select(cartEntry => new OrderStoreFoodItem
-        // {
-        //     OrderId = orderContext.Order.Id,
-        //     StoreId = cartEntry.StoreId,
-        //     FoodItemId = cartEntry.FoodItemId,
-        //     Quantity = cartEntry.Quantity
-        // }).ToList();
+        var orderStoreFoods = _cartEntryRepository.GetAll().Select(cartEntry => new OrderStoreFood
+        {
+            OrderId = orderContext.Order.Id,
+            StoreId = cartEntry.StoreId,
+            FoodId = cartEntry.FoodId,
+            Quantity = cartEntry.Quantity
+        }).ToList();
         
-        // _orderStoreFoodItemRepository.AddRange(orderStoreFoodItems);
+        _orderStoreFoodRepository.AddRange(orderStoreFoods);
         orderContext.ShowToStore();
     }
 
@@ -95,39 +136,39 @@ public class OrderFoodCommand : ICommand
         return null;
     }
 
-    private List<StoreFoodItem> SelectStoreFoodItems(int storeId)
+    private List<StoreFood> SelectStoreFoods(int storeId)
     {
-        var selectedStoreFoodItems = new List<StoreFoodItem>();
-        StoreFoodItem[] storeFoodItems = _storeFoodItemRepository
+        var selectedStoreFoods = new List<StoreFood>();
+        StoreFood[] storeFoods = _storeFoodRepository
             .Find(sfi => sfi.StoreId == storeId,
-                sfi => sfi.FoodItem
+                sfi => sfi.Food
                 )
             .ToArray();
-        if (storeFoodItems.Length == 0)
+        if (storeFoods.Length == 0)
         {
             Console.WriteLine("No food items available in this store!");
-            return selectedStoreFoodItems;
+            return selectedStoreFoods;
         }
         while (true)
         {
-            for (int i = 0; i < storeFoodItems.Length; i++)
+            for (int i = 0; i < storeFoods.Length; i++)
             {
-                var storeFoodItem = storeFoodItems[i];
-                Console.WriteLine($"{i}: {storeFoodItem.FoodItem.Name}, Price: {storeFoodItem.Price}");
+                var storeFood = storeFoods[i];
+                Console.WriteLine($"{i}: {storeFood.Food.Name}, Price: {storeFood.Price}");
             }
-
+    
             Console.Write("Please enter the id of the food you want to order or type 'q' to end selection:");
             var input = Console.ReadLine();
             if (input is "q" or "Q")
             {
-                return selectedStoreFoodItems;
+                return selectedStoreFoods;
             }
             
             var id = int.Parse(input ?? string.Empty);
-            if (id < storeFoodItems.Length && id >= 0)
+            if (id < storeFoods.Length && id >= 0)
             {
-                var storeFoodItem = storeFoodItems[id];
-                selectedStoreFoodItems.Add(storeFoodItem);
+                var storeFood = storeFoods[id];
+                selectedStoreFoods.Add(storeFood);
                 Console.WriteLine("Food added to cart!");
                 continue;
             }

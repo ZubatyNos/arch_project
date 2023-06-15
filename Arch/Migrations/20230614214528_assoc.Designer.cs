@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ArchProject.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20230607115226_column")]
-    partial class column
+    [Migration("20230614214528_assoc")]
+    partial class assoc
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,26 +25,25 @@ namespace ArchProject.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ArchProject.Models.Cart", b =>
+            modelBuilder.Entity("ArchProject.Models.CartEntry", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("StoreId")
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("MenuItemId")
+                    b.Property<int>("FoodId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.HasKey("StoreId", "FoodId");
 
-                    b.ToTable("Carts");
+                    b.HasIndex("FoodId");
+
+                    b.ToTable("CartEntry");
                 });
 
-            modelBuilder.Entity("ArchProject.Models.FoodItem", b =>
+            modelBuilder.Entity("ArchProject.Models.Food", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -60,9 +59,19 @@ namespace ArchProject.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("StoreId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
-                    b.ToTable("FoodItem");
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("Food");
 
                     b.HasData(
                         new
@@ -95,6 +104,27 @@ namespace ArchProject.Migrations
                             Description = "Best one",
                             Name = "Hasbulla burger"
                         });
+                });
+
+            modelBuilder.Entity("ArchProject.Models.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StoreId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("Order");
                 });
 
             modelBuilder.Entity("ArchProject.Models.Store", b =>
@@ -136,78 +166,57 @@ namespace ArchProject.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ArchProject.Models.StoreFoodItem", b =>
+            modelBuilder.Entity("ArchProject.Models.CartEntry", b =>
                 {
-                    b.Property<int>("StoreId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("FoodItemId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("StoreId", "FoodItemId");
-
-                    b.HasIndex("FoodItemId");
-
-                    b.ToTable("StoreFoodItem");
-
-                    b.HasData(
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 1,
-                            Price = 10m
-                        },
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 2,
-                            Price = 10m
-                        },
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 3,
-                            Price = 10m
-                        },
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 4,
-                            Price = 10m
-                        },
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 5,
-                            Price = 10m
-                        });
-                });
-
-            modelBuilder.Entity("ArchProject.Models.StoreFoodItem", b =>
-                {
-                    b.HasOne("ArchProject.Models.FoodItem", "FoodItem")
+                    b.HasOne("ArchProject.Models.Food", "Food")
                         .WithMany()
-                        .HasForeignKey("FoodItemId")
+                        .HasForeignKey("FoodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ArchProject.Models.Store", "Store")
-                        .WithMany("StoreFoodItems")
+                        .WithMany()
                         .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("FoodItem");
+                    b.Navigation("Food");
 
                     b.Navigation("Store");
                 });
 
+            modelBuilder.Entity("ArchProject.Models.Food", b =>
+                {
+                    b.HasOne("ArchProject.Models.Order", null)
+                        .WithMany("Foods")
+                        .HasForeignKey("OrderId");
+
+                    b.HasOne("ArchProject.Models.Store", null)
+                        .WithMany("Foods")
+                        .HasForeignKey("StoreId");
+                });
+
+            modelBuilder.Entity("ArchProject.Models.Order", b =>
+                {
+                    b.HasOne("ArchProject.Models.Store", "Store")
+                        .WithMany("Orders")
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("ArchProject.Models.Order", b =>
+                {
+                    b.Navigation("Foods");
+                });
+
             modelBuilder.Entity("ArchProject.Models.Store", b =>
                 {
-                    b.Navigation("StoreFoodItems");
+                    b.Navigation("Foods");
+
+                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }

@@ -9,6 +9,10 @@ public class NotSeenYetState : OrderState
     public override void ToBeDelivered()
     {
         _context.ChangeState(new ToBeDeliveredState());
-        _context.DoDeliver();
+    }
+    
+    public override void Refund()
+    {
+        _context.ChangeState(new RefundedState());
     }
 }

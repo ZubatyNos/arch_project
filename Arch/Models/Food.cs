@@ -2,7 +2,7 @@
 
 namespace ArchProject.Models;
 
-public class FoodItem
+public class Food
 {
     [Key]
     public int Id { get; set; }

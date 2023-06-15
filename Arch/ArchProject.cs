@@ -4,6 +4,7 @@ using ArchProject.Enums;
 using ArchProject.Models;
 using ArchProject.Repositories;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ArchProject;
 
@@ -42,7 +43,9 @@ class Arch
             {
                 var command = commands[commandInput];
                 commandHistory.Add(command);
+                Console.WriteLine();
                 command.Execute();
+                Console.WriteLine();
             }
             else
             {
@@ -59,11 +62,11 @@ class Arch
         // Register repositories
         services.AddSingleton<IGenericRepository<Store>, GenericRepository<Store>>();
         services.AddSingleton<IGenericRepository<Order>, GenericRepository<Order>>();
-        services.AddSingleton<IGenericRepository<OrderStoreFoodItem>, GenericRepository<OrderStoreFoodItem>>();
-        services.AddSingleton<IGenericRepository<FoodItem>, GenericRepository<FoodItem>>();
+        services.AddSingleton<IGenericRepository<Food>, GenericRepository<Food>>();
         services.AddSingleton<IGenericRepository<CartEntry>, GenericRepository<CartEntry>>();
-        services.AddSingleton<IGenericRepository<StoreFoodItem>, GenericRepository<StoreFoodItem>>();
-        
+        services.AddSingleton<IGenericRepository<StoreFood>, GenericRepository<StoreFood>>();
+        services.AddSingleton<IGenericRepository<OrderStoreFood>, GenericRepository<OrderStoreFood>>();
+
         return services;    
     }
 
@@ -90,17 +93,25 @@ class Arch
         // Resolve the required repositories
         var cartEntryRepository = serviceProvider.GetRequiredService<IGenericRepository<CartEntry>>();
         var storeRepository = serviceProvider.GetRequiredService<IGenericRepository<Store>>();
-        var storeFoodItemRepository = serviceProvider.GetRequiredService<IGenericRepository<StoreFoodItem>>();
         var orderRepository = serviceProvider.GetRequiredService<IGenericRepository<Order>>();
-        var orderStoreFoodItemRepository = serviceProvider.GetRequiredService<IGenericRepository<OrderStoreFoodItem>>();
-        var foodItemRepository = serviceProvider.GetRequiredService<IGenericRepository<FoodItem>>();
+        var foodRepository = serviceProvider.GetRequiredService<IGenericRepository<Food>>();
+        var storeFoodRepository = serviceProvider.GetRequiredService<IGenericRepository<StoreFood>>();
+        var orderStoreFoodRepository = serviceProvider.GetRequiredService<IGenericRepository<OrderStoreFood>>();
+          
         
+        // Setup commands
+        var orderOperationMacroCommand = new MacroCommand(new List<ICommand>
+        {
+            new ViewAllOrdersCommand(orderRepository),
+            new OrderOperationCommand(orderRepository, orderStoreFoodRepository, storeFoodRepository)
+        });
+        orderOperationMacroCommand.Description = "Check orders";
         
         var commands = new List<ICommand>
         {
             new ViewCartCommand(cartEntryRepository),
-            new OrderFoodCommand(cartEntryRepository, storeRepository, orderRepository, storeFoodItemRepository, orderStoreFoodItemRepository),
-            new ViewAllOrdersCommand(orderRepository)
+            orderOperationMacroCommand,
+            new OrderFoodCommand(cartEntryRepository, storeRepository, orderRepository, storeFoodRepository, orderStoreFoodRepository),
         };
         
         return commands;
@@ -112,7 +123,7 @@ class Arch
 
         // Resolve the required repositories
         var orderRepository = serviceProvider.GetRequiredService<IGenericRepository<Order>>();
-
+        var rand = new Random();
 
         while (true)
         {
@@ -124,7 +135,7 @@ class Arch
             if (order is not null)
             {
                 order.Status = order.Status switch {
-                    OrderStatus.Paid => OrderStatus.Delivered,
+                    OrderStatus.Paid => OrderStatus.NotSeenYet,
                     OrderStatus.NotSeenYet => OrderStatus.ToBeDelivered,
                     OrderStatus.ToBeDelivered => OrderStatus.Delivered,
                     _ => throw new ArgumentOutOfRangeException("xddd")

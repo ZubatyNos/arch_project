@@ -3,6 +3,11 @@
 public class MacroCommand : ICommand
 {
     private readonly List<ICommand> _commands;
+    
+    public MacroCommand(List<ICommand> commands)
+    {
+        _commands = commands;
+    }
     public void Execute()
     {
         foreach (var command in _commands)

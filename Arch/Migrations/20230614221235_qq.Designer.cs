@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ArchProject.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20230608072957_enum")]
-    partial class @enum
+    [Migration("20230614221235_qq")]
+    partial class qq
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -30,20 +30,20 @@ namespace ArchProject.Migrations
                     b.Property<int>("StoreId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("FoodItemId")
+                    b.Property<int>("FoodId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
-                    b.HasKey("StoreId", "FoodItemId");
+                    b.HasKey("StoreId", "FoodId");
 
-                    b.HasIndex("FoodItemId");
+                    b.HasIndex("FoodId");
 
-                    b.ToTable("Cart");
+                    b.ToTable("CartEntry");
                 });
 
-            modelBuilder.Entity("ArchProject.Models.FoodItem", b =>
+            modelBuilder.Entity("ArchProject.Models.Food", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -59,9 +59,19 @@ namespace ArchProject.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("StoreId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
-                    b.ToTable("FoodItem");
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("Food");
 
                     b.HasData(
                         new
@@ -107,9 +117,37 @@ namespace ArchProject.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("StoreId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("StoreId");
+
                     b.ToTable("Order");
+                });
+
+            modelBuilder.Entity("ArchProject.Models.OrderStoreFood", b =>
+                {
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StoreId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FoodId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("OrderId", "StoreId", "FoodId");
+
+                    b.HasIndex("FoodId");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("OrderStoreFood");
                 });
 
             modelBuilder.Entity("ArchProject.Models.Store", b =>
@@ -151,66 +189,29 @@ namespace ArchProject.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ArchProject.Models.StoreFoodItem", b =>
+            modelBuilder.Entity("ArchProject.Models.StoreFood", b =>
                 {
                     b.Property<int>("StoreId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("FoodItemId")
+                    b.Property<int>("FoodId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("OrderId")
+                    b.Property<int>("Price")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                    b.HasKey("StoreId", "FoodId");
 
-                    b.HasKey("StoreId", "FoodItemId");
+                    b.HasIndex("FoodId");
 
-                    b.HasIndex("FoodItemId");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("StoreFoodItem");
-
-                    b.HasData(
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 1,
-                            Price = 20m
-                        },
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 2,
-                            Price = 30m
-                        },
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 3,
-                            Price = 40m
-                        },
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 4,
-                            Price = 50m
-                        },
-                        new
-                        {
-                            StoreId = 1,
-                            FoodItemId = 5,
-                            Price = 60m
-                        });
+                    b.ToTable("StoreFood");
                 });
 
             modelBuilder.Entity("ArchProject.Models.CartEntry", b =>
                 {
-                    b.HasOne("ArchProject.Models.FoodItem", "FoodItem")
+                    b.HasOne("ArchProject.Models.Food", "Food")
                         .WithMany()
-                        .HasForeignKey("FoodItemId")
+                        .HasForeignKey("FoodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -220,42 +221,85 @@ namespace ArchProject.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("FoodItem");
+                    b.Navigation("Food");
 
                     b.Navigation("Store");
                 });
 
-            modelBuilder.Entity("ArchProject.Models.StoreFoodItem", b =>
+            modelBuilder.Entity("ArchProject.Models.Food", b =>
                 {
-                    b.HasOne("ArchProject.Models.FoodItem", "FoodItem")
+                    b.HasOne("ArchProject.Models.Order", null)
+                        .WithMany("Foods")
+                        .HasForeignKey("OrderId");
+
+                    b.HasOne("ArchProject.Models.Store", null)
+                        .WithMany("Foods")
+                        .HasForeignKey("StoreId");
+                });
+
+            modelBuilder.Entity("ArchProject.Models.Order", b =>
+                {
+                    b.HasOne("ArchProject.Models.Store", null)
+                        .WithMany("Orders")
+                        .HasForeignKey("StoreId");
+                });
+
+            modelBuilder.Entity("ArchProject.Models.OrderStoreFood", b =>
+                {
+                    b.HasOne("ArchProject.Models.Food", "Food")
                         .WithMany()
-                        .HasForeignKey("FoodItemId")
+                        .HasForeignKey("FoodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ArchProject.Models.Order", null)
-                        .WithMany("StoreFoodItems")
-                        .HasForeignKey("OrderId");
+                    b.HasOne("ArchProject.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("ArchProject.Models.Store", "Store")
-                        .WithMany("StoreFoodItems")
+                        .WithMany()
                         .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("FoodItem");
+                    b.Navigation("Food");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("ArchProject.Models.StoreFood", b =>
+                {
+                    b.HasOne("ArchProject.Models.Food", "Food")
+                        .WithMany()
+                        .HasForeignKey("FoodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ArchProject.Models.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Food");
 
                     b.Navigation("Store");
                 });
 
             modelBuilder.Entity("ArchProject.Models.Order", b =>
                 {
-                    b.Navigation("StoreFoodItems");
+                    b.Navigation("Foods");
                 });
 
             modelBuilder.Entity("ArchProject.Models.Store", b =>
                 {
-                    b.Navigation("StoreFoodItems");
+                    b.Navigation("Foods");
+
+                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }

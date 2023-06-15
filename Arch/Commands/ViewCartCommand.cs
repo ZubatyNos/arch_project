@@ -14,11 +14,11 @@ public class ViewCartCommand : ICommand
     public void Execute()
     {
         // var cart = _cartEntryService.GetCart();
-        var cart = _cartEntryRepository.GetAll(c => c.FoodItem).ToArray();
+        var cart = _cartEntryRepository.GetAll(c => c.Food).ToArray();
         Console.WriteLine($"Cart items({cart.Length}):");
         foreach (var cartEntry in cart)
         {
-            Console.WriteLine($"{cartEntry.FoodItem.Name}, {cartEntry.Quantity}pcs");
+            Console.WriteLine($"{cartEntry.Food.Name}, {cartEntry.Quantity}pcs");
         }
     }
 

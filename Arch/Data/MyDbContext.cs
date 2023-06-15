@@ -5,12 +5,12 @@ namespace ArchProject.Data;
 
 public class MyDbContext : DbContext
 {
-    public DbSet<CartEntry> Cart { get; set; }
+    public DbSet<CartEntry> CartEntry { get; set; }
     public DbSet<Store> Store { get; set; }
-    public DbSet<StoreFoodItem> StoreFoodItem { get; set; }
-    public DbSet<FoodItem> FoodItem { get; set; }
+    public DbSet<Food> Food { get; set; }
     public DbSet<Order> Order { get; set; }
-    public DbSet<OrderStoreFoodItem> OrderStoreFoodItem { get; set; }
+    public DbSet<StoreFood> StoreFood { get; set; }
+    public DbSet<OrderStoreFood> OrderStoreFood { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -27,25 +27,25 @@ public class MyDbContext : DbContext
         var stores = CreateStoreDtos();
         modelBuilder.Entity<Store>().HasData(stores);
         
-        var foodItems = CreateFoodItemDtos();
-        modelBuilder.Entity<FoodItem>().HasData(foodItems);
+        var foods = CreateFoodItemDtos();
+        modelBuilder.Entity<Food>().HasData(foods);
         
-        var storeFoodItems = foodItems.Select(foodItem => new StoreFoodItem()
+        var storeFoods = foods.Select(food => new StoreFood()
             {
-                FoodItemId = foodItem.Id,
-                Price = 10 + (10 * foodItem.Id),
+                FoodId = food.Id,
+                Price = 10 + (10 * food.Id),
                 StoreId = stores.First().Id
             })
             .ToList();
-        modelBuilder.Entity<StoreFoodItem>()
-            .HasKey(sf => new { sf.StoreId, sf.FoodItemId });
-        modelBuilder.Entity<StoreFoodItem>()
-            .HasData(storeFoodItems);
+        modelBuilder.Entity<StoreFood>()
+            .HasKey(sf => new { sf.StoreId, sf.FoodId });
+        modelBuilder.Entity<StoreFood>()
+            .HasData(storeFoods);
     }
 
-    private List<FoodItem> CreateFoodItemDtos()
+    private List<Food> CreateFoodItemDtos()
     {
-        return new List<FoodItem>
+        return new List<Food>
         {
             new()
             {
@@ -53,25 +53,25 @@ public class MyDbContext : DbContext
                 Name = "Molotov burger",
                 Description = "Burger with a kick"
             },
-            new FoodItem
+            new Food
             {
                 Id = 2,
                 Name = "Vegan burger",
                 Description = "Lame burger"
             },
-            new FoodItem
+            new Food
             {
                 Id = 3,
                 Name = "Fries",
                 Description = "Just fries, man"
             },
-            new FoodItem
+            new Food
             {
                 Id = 4,
                 Name = "Coke",
                 Description = ":)))"
             },
-            new FoodItem
+            new Food
             {
                 Id = 5,
                 Name = "Hasbulla burger",
